@@ -30,6 +30,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -67,6 +68,7 @@ fun SessionDetailsScreen(
             MissingContent("This session no longer exists.")
             return@Column
         }
+        val context = LocalContext.current
         val isCreator = session.creatorId == currentUserId
         val joinedInitially = currentUserId in session.participantIds
         var joined by rememberSaveable(session.sessionId) { mutableStateOf(joinedInitially) }
@@ -129,7 +131,12 @@ fun SessionDetailsScreen(
                     SecondaryButton("Delete", onClick = { showDeleteDialog = true }, icon = Icons.Outlined.Delete, modifier = Modifier.weight(1f))
                 }
             }
-            SecondaryButton("Share", onClick = {}, icon = Icons.Outlined.Share, modifier = Modifier.fillMaxWidth())
+            SecondaryButton(
+                "Share",
+                onClick = { context.shareSession(buildSessionShare(shownSession, formatSessionDateLong(session.startAtMillis))) },
+                icon = Icons.Outlined.Share,
+                modifier = Modifier.fillMaxWidth(),
+            )
         }
 
         if (showDeleteDialog) {
