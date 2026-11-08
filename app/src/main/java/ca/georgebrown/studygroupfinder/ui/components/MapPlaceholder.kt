@@ -23,11 +23,8 @@ import ca.georgebrown.studygroupfinder.ui.theme.MapLand
 import ca.georgebrown.studygroupfinder.ui.theme.MapRoad
 
 /**
- * Drawn stand-in for Google Maps in Prototype 1.
- *
- * Why not the real map yet: Maps Compose needs an API key in local.properties, and a missing key
- * shows a blank grey map. Ben swaps this for GoogleMap { Marker(...) } in the Maps & Location sprint (week 8);
- * callers do not change because they only pass a label.
+ * Drawn stand-in for a map. [SessionLocationMap] shows this instead of Google Maps when a session has
+ * no coordinates or MAPS_API_KEY is missing, so the layout never shows a blank grey box.
  */
 @Composable
 fun MapPlaceholder(

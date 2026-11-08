@@ -1,3 +1,13 @@
+import java.util.Properties
+
+// MAPS_API_KEY lives in local.properties, which is git-ignored, so the key never reaches GitHub.
+// Each teammate adds their own line: MAPS_API_KEY=AIza...
+val localProperties = Properties().apply {
+    val file = rootProject.file("local.properties")
+    if (file.exists()) file.inputStream().use { load(it) }
+}
+val mapsApiKey: String = localProperties.getProperty("MAPS_API_KEY", "")
+
 // AGP 9 compiles Kotlin itself ("built-in Kotlin"), so there is no org.jetbrains.kotlin.android plugin here.
 plugins {
     alias(libs.plugins.android.application)
@@ -14,6 +24,11 @@ android {
         targetSdk = 35
         versionCode = 1
         versionName = "0.1.0-prototype1"
+
+        // Fills ${MAPS_API_KEY} in AndroidManifest.xml.
+        manifestPlaceholders["MAPS_API_KEY"] = mapsApiKey
+        // Lets the app show the drawn placeholder instead of a blank grey map when no key is set.
+        buildConfigField("boolean", "HAS_MAPS_KEY", mapsApiKey.isNotBlank().toString())
     }
 
     buildTypes {
@@ -28,6 +43,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
@@ -45,6 +61,11 @@ dependencies {
     implementation(libs.androidx.compose.material.icons.extended)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.kotlinx.coroutines)
+
+    // Maps & Location: Google Map composables, the map SDK itself, and FusedLocationProviderClient for GPS.
+    implementation(libs.google.maps.compose)
+    implementation(libs.play.services.maps)
+    implementation(libs.play.services.location)
 
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)

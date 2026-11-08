@@ -39,13 +39,14 @@ import ca.georgebrown.studygroupfinder.data.model.LocationType
 import ca.georgebrown.studygroupfinder.data.model.StudySession
 import ca.georgebrown.studygroupfinder.ui.components.AppTopBar
 import ca.georgebrown.studygroupfinder.ui.components.InfoRow
-import ca.georgebrown.studygroupfinder.ui.components.MapPlaceholder
 import ca.georgebrown.studygroupfinder.ui.components.MissingContent
 import ca.georgebrown.studygroupfinder.ui.components.PrimaryButton
 import ca.georgebrown.studygroupfinder.ui.components.SecondaryButton
 import ca.georgebrown.studygroupfinder.ui.components.SectionCard
+import ca.georgebrown.studygroupfinder.ui.components.SessionLocationMap
 import ca.georgebrown.studygroupfinder.ui.components.seatsText
 import ca.georgebrown.studygroupfinder.ui.theme.Dimens
+import ca.georgebrown.studygroupfinder.ui.map.geoPoint
 import ca.georgebrown.studygroupfinder.ui.util.formatSessionDateLong
 
 /**
@@ -99,8 +100,11 @@ fun SessionDetailsScreen(
             }
 
             if (session.locationType == LocationType.ON_CAMPUS) {
-                MapPlaceholder(
+                // Small static preview; the full-screen map (View Map) handles panning, GPS and directions.
+                SessionLocationMap(
+                    destination = session.geoPoint,
                     destinationLabel = session.locationLabel,
+                    interactive = false,
                     modifier = Modifier.fillMaxWidth().height(140.dp),
                 )
                 SecondaryButton("View Map", onClick = onViewMap, icon = Icons.Outlined.Map, modifier = Modifier.fillMaxWidth())
