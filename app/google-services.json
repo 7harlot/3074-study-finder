@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "412465692636",
+    "project_id": "study-group-finder-78204",
+    "storage_bucket": "study-group-finder-78204.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:412465692636:android:f4c92e9bbe4c35dda0d919",
+        "android_client_info": {
+          "package_name": "ca.georgebrown.studygroupfinder"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAP8UfTsKtKTZPYOjAydFAeVhdhTCeiPDw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
