@@ -16,6 +16,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.Notes
 import androidx.compose.material.icons.outlined.AccessTime
+import androidx.compose.material.icons.outlined.ArrowDropDown
 import androidx.compose.material.icons.outlined.Book
 import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.Check
@@ -28,6 +29,8 @@ import androidx.compose.material.icons.outlined.Title
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.Icon
+import androidx.compose.material3.SelectableDates
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -44,6 +47,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import ca.georgebrown.studygroupfinder.data.model.LocationType
@@ -76,14 +81,20 @@ fun CreateEditSessionScreen(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
-    val defaultStartMillis = existing?.startAtMillis
-        ?: (System.currentTimeMillis() + 24 * 60 * 60 * 1000L)
+    // New sessions start from "tomorrow at 3:00 PM" so the pickers open somewhere sensible.
+    val defaultStartMillis = existing?.startAtMillis ?: Calendar.getInstance().apply {
+        add(Calendar.DAY_OF_YEAR, 1)
+        set(Calendar.HOUR_OF_DAY, 15); set(Calendar.MINUTE, 0)
+        set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0)
+    }.timeInMillis
 
     var courseCode by rememberSaveable { mutableStateOf(existing?.courseCode.orEmpty()) }
     var topic by rememberSaveable { mutableStateOf(existing?.topic.orEmpty()) }
     var description by rememberSaveable { mutableStateOf(existing?.description.orEmpty()) }
     var startAtMillis by rememberSaveable { mutableLongStateOf(defaultStartMillis) }
-    var hasSelectedDateTime by rememberSaveable { mutableStateOf(existing != null) }
+    // Tracked separately so the Time field stays empty until the user actually picks a time.
+    var hasSelectedDate by rememberSaveable { mutableStateOf(existing != null) }
+    var hasSelectedTime by rememberSaveable { mutableStateOf(existing != null) }
     var typeIndex by rememberSaveable { mutableIntStateOf(if (existing?.locationType == LocationType.ONLINE) 1 else 0) }
     var campus by rememberSaveable { mutableStateOf(existing?.campusName?.ifBlank { "Casa Loma" } ?: "Casa Loma") }
     var room by rememberSaveable { mutableStateOf(existing?.locationLabel.orEmpty()) }
@@ -95,8 +106,8 @@ fun CreateEditSessionScreen(
     var showDatePicker by rememberSaveable { mutableStateOf(false) }
     var showTimePicker by rememberSaveable { mutableStateOf(false) }
 
-    val dateText = if (hasSelectedDateTime) formatDateOnly(startAtMillis) else ""
-    val timeText = if (hasSelectedDateTime) formatTimeOnly(startAtMillis) else ""
+    val dateText = if (hasSelectedDate) formatDateOnly(startAtMillis) else ""
+    val timeText = if (hasSelectedTime) formatTimeOnly(startAtMillis) else ""
 
     Column(modifier = modifier.fillMaxSize()) {
         AppTopBar(title = if (isEdit) "Edit Session" else "Create Session", onBack = onBack)
@@ -133,26 +144,20 @@ fun CreateEditSessionScreen(
             )
 
             SectionHeading("Logistics")
-            Box(modifier = Modifier.fillMaxWidth().clickable { showDatePicker = true }) {
-                AppTextField(
-                    value = dateText,
-                    onValueChange = {},
-                    label = "Date",
-                    placeholder = "Tap to select date",
-                    leadingIcon = Icons.Outlined.CalendarMonth,
-                    readOnly = true,
-                )
-            }
-            Box(modifier = Modifier.fillMaxWidth().clickable { showTimePicker = true }) {
-                AppTextField(
-                    value = timeText,
-                    onValueChange = {},
-                    label = "Time",
-                    placeholder = "Tap to select time",
-                    leadingIcon = Icons.Outlined.AccessTime,
-                    readOnly = true,
-                )
-            }
+            PickerField(
+                value = dateText,
+                label = "Date",
+                placeholder = "Tap to pick a date",
+                icon = Icons.Outlined.CalendarMonth,
+                onClick = { showDatePicker = true },
+            )
+            PickerField(
+                value = timeText,
+                label = "Time",
+                placeholder = "Tap to pick a time",
+                icon = Icons.Outlined.AccessTime,
+                onClick = { showTimePicker = true },
+            )
 
             SegmentedToggle(
                 options = listOf("On campus", "Online"),
@@ -224,7 +229,7 @@ fun CreateEditSessionScreen(
                         val error = validateSessionInput(
                             courseCode = courseCode,
                             topic = topic,
-                            hasSelectedDateTime = hasSelectedDateTime,
+                            hasSelectedDateTime = hasSelectedDate && hasSelectedTime,
                             startAtMillis = startAtMillis,
                             nowMillis = System.currentTimeMillis(),
                             isOnline = typeIndex == 1,
@@ -289,7 +294,24 @@ fun CreateEditSessionScreen(
     }
 
     if (showDatePicker) {
-        val datePickerState = rememberDatePickerState(initialSelectedDateMillis = startAtMillis)
+        // The DatePicker works in UTC midnights, so convert our local date to that before showing it.
+        val localStart = Calendar.getInstance().apply { timeInMillis = startAtMillis }
+        val initialUtcMillis = Calendar.getInstance(TimeZone.getTimeZone("UTC")).apply {
+            clear()
+            set(localStart.get(Calendar.YEAR), localStart.get(Calendar.MONTH), localStart.get(Calendar.DAY_OF_MONTH))
+        }.timeInMillis
+        val todayUtcMillis = Calendar.getInstance(TimeZone.getTimeZone("UTC")).apply {
+            val now = Calendar.getInstance()
+            clear()
+            set(now.get(Calendar.YEAR), now.get(Calendar.MONTH), now.get(Calendar.DAY_OF_MONTH))
+        }.timeInMillis
+        val datePickerState = rememberDatePickerState(
+            initialSelectedDateMillis = initialUtcMillis,
+            // Past days are greyed out: sessions must be in the future.
+            selectableDates = object : SelectableDates {
+                override fun isSelectableDate(utcTimeMillis: Long) = utcTimeMillis >= todayUtcMillis
+            },
+        )
         DatePickerDialog(
             onDismissRequest = { showDatePicker = false },
             confirmButton = {
@@ -307,7 +329,7 @@ fun CreateEditSessionScreen(
                                 set(Calendar.DAY_OF_MONTH, utcCal.get(Calendar.DAY_OF_MONTH))
                             }
                             startAtMillis = localCal.timeInMillis
-                            hasSelectedDateTime = true
+                            hasSelectedDate = true
                             validationError = null
                         }
                         showDatePicker = false
@@ -344,7 +366,7 @@ fun CreateEditSessionScreen(
                             set(Calendar.MILLISECOND, 0)
                         }
                         startAtMillis = updatedCal.timeInMillis
-                        hasSelectedDateTime = true
+                        hasSelectedTime = true
                         validationError = null
                         showTimePicker = false
                     }
@@ -394,6 +416,37 @@ internal fun validateSessionInput(
         return "Maximum participants cannot be less than the people already joined ($currentParticipantCount)."
     }
     return null
+}
+
+/**
+ * A read-only field that opens a picker when tapped anywhere.
+ * The tap target sits on top of the text field, because a read-only TextField still swallows taps
+ * (it takes focus), so a clickable wrapped around it never fires.
+ */
+@Composable
+private fun PickerField(
+    value: String,
+    label: String,
+    placeholder: String,
+    icon: ImageVector,
+    onClick: () -> Unit,
+) {
+    Box(Modifier.fillMaxWidth()) {
+        AppTextField(
+            value = value,
+            onValueChange = {},
+            label = label,
+            placeholder = placeholder,
+            leadingIcon = icon,
+            readOnly = true,
+            trailingIcon = { Icon(Icons.Outlined.ArrowDropDown, contentDescription = null) },
+        )
+        Box(
+            Modifier
+                .matchParentSize()
+                .clickable(onClickLabel = "Pick ${label.lowercase()}", role = Role.Button, onClick = onClick),
+        )
+    }
 }
 
 @Composable
