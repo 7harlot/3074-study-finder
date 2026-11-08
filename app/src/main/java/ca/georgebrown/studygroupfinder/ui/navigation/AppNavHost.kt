@@ -47,6 +47,7 @@ fun AppNavHost(
     val showBottomBar = currentRoute in Routes.signedInRoutes
     val selectedTab = tabFor(currentRoute)
     val signedInUser by container.authRepository.currentUser.collectAsStateWithLifecycle()
+    val sessions by container.sessionRepository.sessions.collectAsStateWithLifecycle()
 
     // Live auth state: if the user is signed out while inside the app (Sign Out, or Firebase revoking the login),
     // go to Login and clear the back stack so Back can't reopen signed-in screens.
@@ -97,13 +98,15 @@ fun AppNavHost(
             ) { entry ->
                 val sessionId = entry.arguments?.getString(Routes.ARG_SESSION_ID).orEmpty()
                 SessionDetailsScreen(
-                    session = container.sessionRepository.getSession(sessionId),
-                    currentUserId = container.authRepository.currentUser.value?.userId,
+                    sessionId = sessionId,
+                    sessionRepository = container.sessionRepository,
+                    currentUserId = signedInUser?.userId,
                     onBack = { navController.popBackStack() },
                     onViewMap = { navController.navigate(Routes.sessionMap(sessionId)) },
                     onEdit = { navController.navigate(Routes.editSession(sessionId)) },
                 )
             }
+
             composable(
                 Routes.SESSION_MAP,
                 arguments = listOf(navArgument(Routes.ARG_SESSION_ID) { type = NavType.StringType }),
@@ -123,11 +126,15 @@ fun AppNavHost(
                 }),
             ) { entry ->
                 val sessionId = entry.arguments?.getString(Routes.ARG_SESSION_ID)
+                val existing = sessionId?.let { id -> sessions.firstOrNull { it.sessionId == id } }
                 CreateEditSessionScreen(
-                    existing = sessionId?.let { container.sessionRepository.getSession(it) },
+                    existing = existing,
+                    sessionRepository = container.sessionRepository,
+                    currentUser = signedInUser,
                     onBack = { navController.popBackStack() },
                 )
             }
+
             composable(Routes.MY_SESSIONS) {
                 val vm: MySessionsViewModel = viewModel(
                     factory = MySessionsViewModel.factory(container.sessionRepository, container.authRepository),
