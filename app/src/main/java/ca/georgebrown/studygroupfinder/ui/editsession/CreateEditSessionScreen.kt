@@ -44,7 +44,7 @@ import ca.georgebrown.studygroupfinder.ui.util.formatTimeOnly
 
 /**
  * Screen 5: Create / Edit Session. One screen, two modes: [existing] null = Create, otherwise Edit (pre-filled).
- * Prototype 1 is UI only: Save just returns. Validation and saving are Zuheib's Session Creation sprint (FR-03, FR-04).
+ * Prototype 1 is UI only: Save just returns. Saving to Firestore is Munir's Session CRUD task (FR-03, FR-04).
  */
 @Composable
 fun CreateEditSessionScreen(

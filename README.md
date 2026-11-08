@@ -10,7 +10,7 @@ COMP3074 Group P100 · Kotlin + Jetpack Compose + MVVM
 | 3 Feed (Home) | UI + sample data, search by course/topic |
 | 4 Session Details | UI + sample data, Join/Leave toggles locally, creator-only Edit/Delete |
 | 5 Create / Edit Session | UI only (one screen, two modes) |
-| 6 Full-Screen Map | UI with a drawn map placeholder |
+| 6 Full-Screen Map | **Logic:** Google Map pin, location permission, Get Directions from your GPS position |
 | 7 My Sessions | Joined / Created tabs + empty state |
 | 8 Profile | Shows the signed-in user, **Sign Out works** |
 | 9 About | Team members |
@@ -21,13 +21,15 @@ Demo account: `aisha.patel@georgebrown.ca` / `password123` (or tap Sign Up).
 ## Run it
 Open this folder in Android Studio and press Run, or `gradlew assembleDebug`. Unit tests: `gradlew testDebugUnitTest`.
 
+Maps: add your own key to `local.properties` (git-ignored) as `MAPS_API_KEY=AIza...`. Without it the map screens show a drawn placeholder. Use an emulator with a Google Play system image.
+
 Toolchain: AGP 9.4.0, Gradle 9.7.1, Kotlin 2.2.10 (AGP built-in Kotlin), compileSdk/targetSdk 35, minSdk 26.
 Android Studio's bundled Java 25 can't run Gradle 8.x, which is why the project is on Gradle 9.
 
 ## Where things live (who owns what next)
 ```
 data/model          User, StudySession (match proposal Section 7)
-data/repository     AuthRepository + LocalAuthRepository   -> Zuheib swaps in Firebase Auth
+data/repository     AuthRepository + LocalAuthRepository   -> Munir swaps in Firebase Auth
                     SessionRepository + FakeSessionRepository -> Munir swaps in Firestore
 di/AppContainer     the one place implementations are chosen
 ui/theme            colours, type, spacing (every screen uses these, never raw values)
@@ -38,5 +40,5 @@ ui/<screen>         one package per screen
 Swapping fake data for Firebase only changes `AppContainer`; screens talk to the interfaces.
 
 ## Not in Prototype 1 (planned, see Development Plan)
-Google Maps + location permission (Ben, wk 8) · Firestore data and real join/leave (Munir, wk 4–7) ·
-create/edit validation and saving (Zuheib, wk 5) · date/time pickers, date filter, share by email.
+Firestore data and real join/leave (Munir, wk 4–7) ·
+create/edit saving (Munir, wk 5) · Firebase wiring in AppContainer/Splash (Ben, wk 3) · date/time pickers, date filter, share by email.

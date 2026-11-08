@@ -5,7 +5,7 @@ import kotlinx.coroutines.flow.StateFlow
 
 /**
  * Everything the UI needs from authentication. The prototype uses [LocalAuthRepository];
- * the Firebase version (Zuheib's area) implements this same interface, so no screen changes.
+ * the Firebase version (Munir's FirebaseAuthRepository) implements this same interface, so no screen changes.
  */
 interface AuthRepository {
     /** The signed-in user, or null when signed out. */
