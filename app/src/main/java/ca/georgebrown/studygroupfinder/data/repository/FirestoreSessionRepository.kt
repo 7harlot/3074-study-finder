@@ -2,7 +2,9 @@ package ca.georgebrown.studygroupfinder.data.repository
 
 import ca.georgebrown.studygroupfinder.data.model.LocationType
 import ca.georgebrown.studygroupfinder.data.model.StudySession
+import android.util.Log
 import com.google.firebase.Timestamp
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.FirebaseFirestoreSettings
@@ -22,6 +24,7 @@ import java.util.Date
  */
 class FirestoreSessionRepository(
     private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance(),
+    private val auth: FirebaseAuth = FirebaseAuth.getInstance(),
 ) : SessionRepository {
 
     private val sessionsCollection = firestore.collection(COLLECTION_SESSIONS)
@@ -36,7 +39,17 @@ class FirestoreSessionRepository(
 
     init {
         enableOfflinePersistence()
-        startListening()
+        // firestore.rules only allow signed-in reads. A listener started before sign-in is rejected and
+        // Firestore drops it for good, which left the Feed empty until the app restarted. So follow the
+        // auth state: listen while signed in, stop and clear on sign-out (so the next user never sees stale data).
+        auth.addAuthStateListener { firebaseAuth ->
+            if (firebaseAuth.currentUser != null) {
+                startListening()
+            } else {
+                stopListening()
+                _sessions.value = emptyList()
+            }
+        }
     }
 
     private fun enableOfflinePersistence() {
@@ -53,7 +66,13 @@ class FirestoreSessionRepository(
     fun startListening() {
         if (listenerRegistration != null) return
         listenerRegistration = sessionsCollection.addSnapshotListener { snapshot, error ->
-            if (error != null || snapshot == null) return@addSnapshotListener
+            if (error != null) {
+                Log.w(TAG, "Sessions listener stopped", error)
+                // Firestore has already removed a failed listener; forget it so the next sign-in can restart it.
+                listenerRegistration = null
+                return@addSnapshotListener
+            }
+            if (snapshot == null) return@addSnapshotListener
             val loaded = snapshot.documents
                 .mapNotNull { doc -> doc.toStudySessionOrNull() }
                 .sortedBy { it.startAtMillis }
@@ -348,6 +367,7 @@ class FirestoreSessionRepository(
     }
 
     companion object {
+        private const val TAG = "FirestoreSessionRepo"
         private const val COLLECTION_SESSIONS = "sessions"
         private const val FIELD_SESSION_ID = "sessionId"
         private const val FIELD_CREATOR_ID = "creatorId"

@@ -18,7 +18,7 @@ class AppContainer(context: Context) {
     val authRepository: AuthRepository =
         if (USE_FIREBASE_AUTH) FirebaseAuthRepository() else LocalAuthRepository(context.applicationContext)
 
-    // TODO(Munir): swap for FirestoreSessionRepository() once it implements SessionRepository.
+    // true = live Firestore sessions; false = in-memory sample sessions (offline demos, UI work).
     val sessionRepository: SessionRepository =
         if (USE_FIRESTORE_SESSIONS) FirestoreSessionRepository() else FakeSessionRepository()
 
