@@ -6,8 +6,17 @@ package ca.georgebrown.studygroupfinder.ui.auth
  */
 object AuthValidator {
 
-    /** College email domains accepted at sign-up. Add more here, not in the UI. */
-    val allowedEmailDomains = listOf("georgebrown.ca")
+    /**
+     * Email domains accepted at sign-up and login. Empty = any email.
+     *
+     * The design proposal (FR-01) says college emails only. We allow any email for now so testers
+     * without a GBC address can sign up; set this to listOf("georgebrown.ca") to enforce FR-01 again.
+     */
+    val allowedEmailDomains: List<String> = emptyList()
+
+    /** True if [email]'s domain is allowed. Exact match, so "evilgeorgebrown.ca" doesn't pass for "georgebrown.ca". */
+    fun isAllowedDomain(email: String, allowedDomains: List<String> = allowedEmailDomains): Boolean =
+        allowedDomains.isEmpty() || email.trim().substringAfter('@').lowercase() in allowedDomains
 
     const val MIN_PASSWORD_LENGTH = 8
 
@@ -19,14 +28,11 @@ object AuthValidator {
         else -> null
     }
 
-    fun validateEmail(email: String): String? {
+    fun validateEmail(email: String, allowedDomains: List<String> = allowedEmailDomains): String? {
         val trimmed = email.trim()
-        if (trimmed.isEmpty()) return "Enter your college email."
+        if (trimmed.isEmpty()) return "Enter your email."
         if (!emailPattern.matches(trimmed)) return "That doesn't look like an email address."
-        val domain = trimmed.substringAfter('@').lowercase()
-        if (allowedEmailDomains.none { domain == it }) {
-            return "Use your college email (@${allowedEmailDomains.first()})."
-        }
+        if (!isAllowedDomain(trimmed, allowedDomains)) return "Use your college email (@${allowedDomains.first()})."
         return null
     }
 

@@ -10,12 +10,15 @@ import org.junit.Test
 class AuthValidatorTest {
 
     // --- email ---
-    @Test fun `college email is accepted`() = assertNull(AuthValidator.validateEmail("aisha.patel@georgebrown.ca"))
-    @Test fun `email is trimmed and case-insensitive`() = assertNull(AuthValidator.validateEmail("  Aisha@GeorgeBrown.CA "))
-    @Test fun `empty email is rejected`() = assertEquals("Enter your college email.", AuthValidator.validateEmail(""))
+    private val gbcOnly = listOf("georgebrown.ca")
+
+    @Test fun `college email is accepted`() = assertNull(AuthValidator.validateEmail("aisha.patel@georgebrown.ca", gbcOnly))
+    @Test fun `email is trimmed and case-insensitive`() = assertNull(AuthValidator.validateEmail("  Aisha@GeorgeBrown.CA ", gbcOnly))
+    @Test fun `empty email is rejected`() = assertEquals("Enter your email.", AuthValidator.validateEmail(""))
+    @Test fun `any domain is accepted when no domains are configured`() = assertNull(AuthValidator.validateEmail("aisha@gmail.com", emptyList()))
     @Test fun `malformed email is rejected`() = assertNotNull(AuthValidator.validateEmail("aisha@"))
-    @Test fun `non college domain is rejected`() = assertNotNull(AuthValidator.validateEmail("aisha@gmail.com"))
-    @Test fun `lookalike domain is rejected`() = assertNotNull(AuthValidator.validateEmail("a@evilgeorgebrown.ca"))
+    @Test fun `non college domain is rejected`() = assertNotNull(AuthValidator.validateEmail("aisha@gmail.com", gbcOnly))
+    @Test fun `lookalike domain is rejected`() = assertNotNull(AuthValidator.validateEmail("a@evilgeorgebrown.ca", gbcOnly))
 
     // --- full name ---
     @Test fun `normal name is accepted`() = assertNull(AuthValidator.validateFullName("Aisha Patel"))

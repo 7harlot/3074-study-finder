@@ -5,7 +5,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
@@ -24,6 +26,7 @@ import ca.georgebrown.studygroupfinder.ui.editsession.CreateEditSessionScreen
 import ca.georgebrown.studygroupfinder.ui.feed.FeedScreen
 import ca.georgebrown.studygroupfinder.ui.map.SessionMapScreen
 import ca.georgebrown.studygroupfinder.ui.mysessions.MySessionsScreen
+import ca.georgebrown.studygroupfinder.ui.mysessions.MySessionsViewModel
 import ca.georgebrown.studygroupfinder.ui.profile.EditProfileScreen
 import ca.georgebrown.studygroupfinder.ui.profile.ProfileScreen
 import ca.georgebrown.studygroupfinder.ui.profile.ProfileViewModel
@@ -43,6 +46,15 @@ fun AppNavHost(
     val currentRoute = backStackEntry?.destination?.route
     val showBottomBar = currentRoute in Routes.signedInRoutes
     val selectedTab = tabFor(currentRoute)
+    val signedInUser by container.authRepository.currentUser.collectAsStateWithLifecycle()
+
+    // Live auth state: if the user is signed out while inside the app (Sign Out, or Firebase revoking the login),
+    // go to Login and clear the back stack so Back can't reopen signed-in screens.
+    LaunchedEffect(signedInUser, currentRoute) {
+        if (signedInUser == null && currentRoute in Routes.signedInRoutes) {
+            navController.navigateClearingBackStack(Routes.AUTH)
+        }
+    }
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -117,9 +129,11 @@ fun AppNavHost(
                 )
             }
             composable(Routes.MY_SESSIONS) {
+                val vm: MySessionsViewModel = viewModel(
+                    factory = MySessionsViewModel.factory(container.sessionRepository, container.authRepository),
+                )
                 MySessionsScreen(
-                    sessionRepository = container.sessionRepository,
-                    currentUserId = container.authRepository.currentUser.value?.userId,
+                    viewModel = vm,
                     onOpenSession = { navController.navigate(Routes.sessionDetails(it)) },
                 )
             }
