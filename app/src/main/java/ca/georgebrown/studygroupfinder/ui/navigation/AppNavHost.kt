@@ -26,6 +26,7 @@ import ca.georgebrown.studygroupfinder.ui.map.SessionMapScreen
 import ca.georgebrown.studygroupfinder.ui.mysessions.MySessionsScreen
 import ca.georgebrown.studygroupfinder.ui.profile.EditProfileScreen
 import ca.georgebrown.studygroupfinder.ui.profile.ProfileScreen
+import ca.georgebrown.studygroupfinder.ui.profile.ProfileViewModel
 import ca.georgebrown.studygroupfinder.ui.splash.SplashScreen
 import ca.georgebrown.studygroupfinder.ui.splash.SplashViewModel
 
@@ -123,16 +124,19 @@ fun AppNavHost(
                 )
             }
             composable(Routes.PROFILE) {
+                val vm: ProfileViewModel = viewModel(factory = ProfileViewModel.factory(container.authRepository))
                 ProfileScreen(
-                    authRepository = container.authRepository,
+                    viewModel = vm,
                     onEditProfile = { navController.navigate(Routes.EDIT_PROFILE) },
                     onAbout = { navController.navigate(Routes.ABOUT) },
                     onSignedOut = { navController.navigateClearingBackStack(Routes.AUTH) },
                 )
             }
             composable(Routes.EDIT_PROFILE) {
+                // Own ViewModel per visit, so the form always starts from the latest saved profile.
+                val vm: ProfileViewModel = viewModel(factory = ProfileViewModel.factory(container.authRepository))
                 EditProfileScreen(
-                    authRepository = container.authRepository,
+                    viewModel = vm,
                     onBack = { navController.popBackStack() },
                 )
             }

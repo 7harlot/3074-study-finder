@@ -30,7 +30,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import ca.georgebrown.studygroupfinder.data.repository.AuthRepository
 import ca.georgebrown.studygroupfinder.ui.components.AppTopBar
 import ca.georgebrown.studygroupfinder.ui.components.InfoRow
 import ca.georgebrown.studygroupfinder.ui.components.SecondaryButton
@@ -40,12 +39,12 @@ import ca.georgebrown.studygroupfinder.ui.theme.Dimens
 /** Screen 8: Profile. Shows the signed-in user; Sign Out really signs out (FR-02, FR-16). */
 @Composable
 fun ProfileScreen(
-    authRepository: AuthRepository,
+    viewModel: ProfileViewModel,
     onEditProfile: () -> Unit,
     onAbout: () -> Unit,
     onSignedOut: () -> Unit,
 ) {
-    val user by authRepository.currentUser.collectAsStateWithLifecycle()
+    val user by viewModel.user.collectAsStateWithLifecycle()
 
     Column(Modifier.fillMaxSize()) {
         AppTopBar(title = "Profile")
@@ -77,7 +76,7 @@ fun ProfileScreen(
             SecondaryButton(
                 "Sign Out",
                 onClick = {
-                    authRepository.signOut()
+                    viewModel.signOut()
                     onSignedOut()
                 },
                 icon = Icons.AutoMirrored.Outlined.Logout,
