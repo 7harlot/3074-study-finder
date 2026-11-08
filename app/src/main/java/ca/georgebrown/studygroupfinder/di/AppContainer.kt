@@ -4,8 +4,10 @@ import android.content.Context
 import ca.georgebrown.studygroupfinder.data.repository.AuthRepository
 import ca.georgebrown.studygroupfinder.data.repository.FakeSessionRepository
 import ca.georgebrown.studygroupfinder.data.repository.FirebaseAuthRepository
+import ca.georgebrown.studygroupfinder.data.repository.FirestoreSessionRepository
 import ca.georgebrown.studygroupfinder.data.repository.LocalAuthRepository
 import ca.georgebrown.studygroupfinder.data.repository.SessionRepository
+
 
 /**
  * Manual dependency injection: the one place that decides which implementation each screen gets.
@@ -17,7 +19,9 @@ class AppContainer(context: Context) {
         if (USE_FIREBASE_AUTH) FirebaseAuthRepository() else LocalAuthRepository(context.applicationContext)
 
     // TODO(Munir): swap for FirestoreSessionRepository() once it implements SessionRepository.
-    val sessionRepository: SessionRepository = FakeSessionRepository()
+    val sessionRepository: SessionRepository =
+        if (USE_FIRESTORE_SESSIONS) FirestoreSessionRepository() else FakeSessionRepository()
+
 
     private companion object {
         /**
@@ -25,5 +29,6 @@ class AppContainer(context: Context) {
          * false = the offline prototype accounts, incl. the demo login, for demos without internet.
          */
         const val USE_FIREBASE_AUTH = true
+        const val USE_FIRESTORE_SESSIONS = true
     }
 }
