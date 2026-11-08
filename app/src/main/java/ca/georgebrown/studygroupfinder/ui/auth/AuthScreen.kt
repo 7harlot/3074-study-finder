@@ -97,8 +97,8 @@ fun AuthScreen(
         AppTextField(
             value = state.email,
             onValueChange = viewModel::onEmailChange,
-            label = "College email",
-            placeholder = "name@georgebrown.ca",
+            label = "Email",
+            placeholder = "you@example.com",
             leadingIcon = Icons.Outlined.Email,
             errorText = state.emailError,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next),
