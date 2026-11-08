@@ -9,6 +9,8 @@
 .cxx
 local.properties
 app/build
-P100-prototype.UI.zip
-.mov
-.mp4
+
+# Demo videos and their zips are too big for git; share them through D2L/Drive instead.
+*.mov
+*.mp4
+P100-prototype-UI.zip
