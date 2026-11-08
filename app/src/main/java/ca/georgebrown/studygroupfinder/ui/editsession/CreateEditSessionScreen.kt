@@ -60,7 +60,7 @@ import ca.georgebrown.studygroupfinder.ui.components.AppTextField
 import ca.georgebrown.studygroupfinder.ui.components.AppTopBar
 import ca.georgebrown.studygroupfinder.ui.components.PrimaryButton
 import ca.georgebrown.studygroupfinder.ui.components.SecondaryButton
-import ca.georgebrown.studygroupfinder.ui.components.SegmentedToggle
+import ca.georgebrown.studygroupfinder.ui.components.AppDropdownField
 import ca.georgebrown.studygroupfinder.ui.theme.Dimens
 import ca.georgebrown.studygroupfinder.ui.util.formatDateOnly
 import ca.georgebrown.studygroupfinder.ui.util.formatTimeOnly
@@ -96,7 +96,7 @@ fun CreateEditSessionScreen(
     var hasSelectedDate by rememberSaveable { mutableStateOf(existing != null) }
     var hasSelectedTime by rememberSaveable { mutableStateOf(existing != null) }
     var typeIndex by rememberSaveable { mutableIntStateOf(if (existing?.locationType == LocationType.ONLINE) 1 else 0) }
-    var campus by rememberSaveable { mutableStateOf(existing?.campusName?.ifBlank { "Casa Loma" } ?: "Casa Loma") }
+    var campus by rememberSaveable { mutableStateOf(existing?.campusName?.ifBlank { SessionLocationOptions.DEFAULT_CAMPUS } ?: SessionLocationOptions.DEFAULT_CAMPUS) }
     var room by rememberSaveable { mutableStateOf(existing?.locationLabel.orEmpty()) }
     var meetingLink by rememberSaveable { mutableStateOf(existing?.meetingUrl.orEmpty()) }
     var maxParticipants by rememberSaveable { mutableStateOf(existing?.maxParticipants?.toString() ?: "6") }
@@ -159,24 +159,29 @@ fun CreateEditSessionScreen(
                 onClick = { showTimePicker = true },
             )
 
-            SegmentedToggle(
-                options = listOf("On campus", "Online"),
-                selectedIndex = typeIndex,
-                onSelect = { typeIndex = it; validationError = null },
+            // One "Campus" choice covers both: a campus means on-campus, "Online" switches to a meeting link.
+            AppDropdownField(
+                label = "Campus",
+                options = SessionLocationOptions.campusChoices,
+                selected = if (typeIndex == 1) SessionLocationOptions.ONLINE else campus,
+                onSelect = { choice ->
+                    if (choice == SessionLocationOptions.ONLINE) {
+                        typeIndex = 1
+                    } else {
+                        typeIndex = 0
+                        campus = choice
+                    }
+                    validationError = null
+                },
+                leadingIcon = Icons.Outlined.Place,
             )
             if (typeIndex == 0) {
-                AppTextField(
-                    value = campus,
-                    onValueChange = { campus = it; validationError = null },
-                    label = "Campus",
-                    placeholder = "Casa Loma / St. James / Waterfront",
-                    leadingIcon = Icons.Outlined.Place,
-                )
-                AppTextField(
-                    value = room,
-                    onValueChange = { room = it; validationError = null },
+                AppDropdownField(
                     label = "Room",
-                    placeholder = "Campus library, Study room 2",
+                    options = SessionLocationOptions.rooms,
+                    selected = room,
+                    onSelect = { room = it; validationError = null },
+                    placeholder = "Choose a room",
                     leadingIcon = Icons.Outlined.MeetingRoom,
                 )
             } else {
@@ -416,6 +421,17 @@ internal fun validateSessionInput(
         return "Maximum participants cannot be less than the people already joined ($currentParticipantCount)."
     }
     return null
+}
+
+/**
+ * The choices offered on the Create/Edit form. Add a campus or room here and the dropdowns pick it up.
+ * Campus names must match a case in FirestoreSessionRepository.resolveCampusCoordinates for the map pin.
+ */
+object SessionLocationOptions {
+    const val DEFAULT_CAMPUS = "Casa Loma"
+    const val ONLINE = "Online"
+    val campusChoices = listOf(DEFAULT_CAMPUS, ONLINE)
+    val rooms = listOf("Study Room 1", "Study Room 2", "Study Room 3")
 }
 
 /**
