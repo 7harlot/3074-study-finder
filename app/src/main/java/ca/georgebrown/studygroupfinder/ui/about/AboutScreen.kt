@@ -25,9 +25,8 @@ import ca.georgebrown.studygroupfinder.ui.theme.Dimens
 
 /** The team, in one place, so the About screen and any credits stay in sync. */
 private val teamMembers = listOf(
-    "Abdirahman, Zuheib" to "Authentication & Session Management",
-    "Howlader, Munir" to "Data & Discovery",
-    "Morrison, Ben" to "Architecture & Location",
+    "Howlader, Munir" to "Data, Discovery, Firebase Auth & Sessions",
+    "Morrison, Ben" to "Architecture, Maps & Location, Profile",
 )
 
 /** Screen 9: About (FR-14). App name, version and team members. */
